@@ -1,4 +1,4 @@
-# Stage 1 – Builder
+# Stage 1 – Builder (for building and testing)
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
@@ -10,30 +10,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 
-# Install dependencies (including pytest) into /install
+# Install all dependencies, including dev/test packages like pytest
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Stage 2 – Runtime
-FROM python:3.11-slim
+# Copy application code
+COPY ./app ./app
 
-WORKDIR /app
-
-# Environment variables
+# Optional: set PYTHONPATH in builder (for running tests)
 ENV PYTHONPATH=/app
 ENV HF_HOME=/app/.cache/huggingface
 ENV TRANSFORMERS_CACHE=/app/.cache/huggingface
 
-# Copy Python packages from builder
+# Stage 2 – Runtime (for production)
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Set environment variables for Python path and Hugging Face cache
+ENV PYTHONPATH=/app
+ENV HF_HOME=/app/.cache/huggingface
+ENV TRANSFORMERS_CACHE=/app/.cache/huggingface
+
+# Copy only installed dependencies from builder (runtime deps only)
 COPY --from=builder /install /usr/local
 
 # Copy application code
 COPY ./app ./app
 
-# Ensure Hugging Face cache directory exists with proper permissions
+# Ensure cache directory exists with correct permissions
 RUN mkdir -p /app/.cache/huggingface && chmod -R 777 /app/.cache/huggingface
-
-# Install pytest for runtime tests (optional, but ensures Jenkins can run tests)
-RUN pip install --no-cache-dir pytest pytest-asyncio
 
 EXPOSE 8081
 
