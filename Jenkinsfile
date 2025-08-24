@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.11'   // Use official Python image
+            args '-u root:root'   // Run as root (optional, for installing deps)
+        }
+    }
 
     stages {
         stage('Checkout') {
@@ -26,6 +31,7 @@ pipeline {
         stage('Unit Tests') {
             steps {
                 sh '''
+                    mkdir -p reports
                     pytest -v --maxfail=1 --disable-warnings --junitxml=reports/test-results.xml
                 '''
             }
