@@ -18,6 +18,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Set PYTHONPATH so Python can find 'app' package
+ENV PYTHONPATH=/app
+
 # Copy installed dependencies from builder
 COPY --from=builder /install /usr/local
 
