@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        python "Python3"   // configure Python in Jenkins Global Tool Config
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -21,7 +17,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    python -m pip install --upgrade pip
+                    python3 -m pip install --upgrade pip
                     pip install -r requirements.txt
                 '''
             }
