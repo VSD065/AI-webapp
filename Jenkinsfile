@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.11'   // Use official Python image
-            args '-u root:root'   // Run as root (optional, for installing deps)
-        }
-    }
+    agent any   // Run on any Jenkins agent with Python/pytest available
 
     stages {
         stage('Checkout') {
@@ -19,16 +14,7 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                sh '''
-                    python3 -m pip install --upgrade pip
-                    pip install -r requirements.txt
-                '''
-            }
-        }
-
-        stage('Unit Tests') {
+        stage('Run Unit Tests') {
             steps {
                 sh '''
                     mkdir -p reports
