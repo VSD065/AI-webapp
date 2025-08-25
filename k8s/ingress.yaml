@@ -18,24 +18,4 @@ spec:
                 name: ai-webapp
                 port:
                   number: 80
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ai-webapp-ingress
-  namespace: default
-  annotations:
-    kubernetes.io/ingress.class: alb                # Use ALB
-    alb.ingress.kubernetes.io/scheme: internet-facing  # Public ALB
-    alb.ingress.kubernetes.io/target-type: ip       # Targets are Pods (not Nodes)
-spec:
-  rules:
-    - http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: ai-webapp
-                port:
-                  number: 80
 
