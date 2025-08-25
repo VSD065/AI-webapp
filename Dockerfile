@@ -5,31 +5,33 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-# Install system dependencies required for PyTorch / Hugging Face builds
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
+    build-essential gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip + wheel
+# Upgrade pip tooling
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Copy requirements first (for caching)
+# Copy requirements first
 COPY requirements.txt .
 
-# Install dependencies twice:
-# 1. Into system path (so pytest etc. are on PATH during tests)
-# 2. Into /install (for runtime slim image)
-RUN pip install --no-cache-dir -r requirements.txt \
- && pip install --no-cache-dir --prefix=/install -r requirements.txt
+# Install runtime dependencies into /install
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Copy application code (optional for tests in builder stage)
+# Install test dependencies only in builder
+RUN pip install --no-cache-dir pytest pytest-asyncio
+
+# Copy application code
 COPY ./app ./app
 
-# Environment (builder only)
+# Hugging Face cache env vars
 ENV PYTHONPATH=/app
 ENV HF_HOME=/app/.cache/huggingface
 ENV TRANSFORMERS_CACHE=/app/.cache/huggingface
+
+# ✅ Ensure cache dir exists and is writable by any UID (important for Jenkins)
+RUN mkdir -p /app/.cache/huggingface && chmod -R 777 /app/.cache
 
 
 # ===========================
@@ -39,10 +41,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Create a non-root user for security
+# Create non-root user
 RUN useradd -m appuser
 
-# Environment variables
+# Environment vars
 ENV PYTHONPATH=/app
 ENV HF_HOME=/app/.cache/huggingface
 ENV TRANSFORMERS_CACHE=/app/.cache/huggingface
@@ -50,10 +52,10 @@ ENV TRANSFORMERS_CACHE=/app/.cache/huggingface
 # Copy installed dependencies from builder
 COPY --from=builder /install /usr/local
 
-# Copy app code
+# Copy application code
 COPY ./app ./app
 
-# Ensure Hugging Face cache directory exists with correct permissions
+# Ensure Hugging Face cache exists with correct permissions
 RUN mkdir -p /app/.cache/huggingface && chown -R appuser:appuser /app/.cache
 
 # Switch to non-root user
