@@ -20,15 +20,5 @@ spec:
           image: 533267035494.dkr.ecr.ap-south-1.amazonaws.com/ai-webapp:latest  # tag replaced dynamically in Jenkins
           ports:
             - containerPort: 8081
-          env:
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: ai-webapp-secrets
-                  key: DB_USER
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: ai-webapp-secrets
-                  key: DB_PASSWORD
+        
 
