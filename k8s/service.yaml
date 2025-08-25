@@ -3,12 +3,14 @@ kind: Service
 metadata:
   name: ai-webapp
   namespace: default
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"   # NLB for HTTP traffic
+    service.beta.kubernetes.io/aws-load-balancer-internal: "false"  # public LB
 spec:
   type: LoadBalancer
   selector:
     app: ai-webapp
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 8081
-
+      port: 80        # External port exposed by the LB
+      targetPort: 8081 # Port your app is listening on inside Pods
