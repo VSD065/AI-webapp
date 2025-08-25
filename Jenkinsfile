@@ -76,6 +76,7 @@ pipeline {
                       # Apply Kubernetes manifests (first-time creation or updates)
                       kubectl apply -f k8s/deployment.yaml --namespace=${K8S_NAMESPACE}
                       kubectl apply -f k8s/service.yaml --namespace=${K8S_NAMESPACE}
+                      kubectl apply -f k8s/ingress.yaml --namespace=${K8S_NAMESPACE} 
                       #kubectl apply -f k8s/configmap.yaml --namespace=${K8S_NAMESPACE}   # optional
                       #kubectl apply -f k8s/secrets.yaml --namespace=${K8S_NAMESPACE}    # optional
 
