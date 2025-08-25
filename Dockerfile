@@ -17,8 +17,11 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 # Copy requirements first (for caching)
 COPY requirements.txt .
 
-# Install dependencies into a separate prefix directory
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+# Install dependencies twice:
+# 1. Into system path (so pytest etc. are on PATH during tests)
+# 2. Into /install (for runtime slim image)
+RUN pip install --no-cache-dir -r requirements.txt \
+ && pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # Copy application code (optional for tests in builder stage)
 COPY ./app ./app
