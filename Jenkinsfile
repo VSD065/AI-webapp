@@ -4,19 +4,13 @@ pipeline {
     environment {
         AWS_REGION = "ap-south-1"
         ECR_REPO = "533267035494.dkr.ecr.ap-south-1.amazonaws.com/ai-webapp"
-        K8S_DEPLOYMENT = "ai-webapp"   // name of your Deployment in EKS
-        K8S_NAMESPACE = "default"      // change if you use another namespace
-        CLUSTER_NAME = "your-eks-cluster-name" // <-- update this
+        K8S_DEPLOYMENT = "ai-webapp"
+        K8S_NAMESPACE = "default"
+        CLUSTER_NAME = "AI-webapp-cluster" // replace with your cluster name
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Set Commit Hash as Tag') {
+        stage('Get Commit Hash') {
             steps {
                 script {
                     def commitHash = sh(script: 'git rev-parse HEAD', returnStdout: true).trim().take(6)
@@ -29,7 +23,7 @@ pipeline {
         stage('Build Builder Image') {
             steps {
                 script {
-                    builderImage = docker.build("ai-webapp-builder:${IMAGE_TAG}", "--target builder .")
+                    builderImage = docker.build("ai-webapp-builder:${env.IMAGE_TAG}", "--target builder .")
                 }
             }
         }
@@ -55,7 +49,7 @@ pipeline {
         stage('Build Runtime Image') {
             steps {
                 script {
-                    runtimeImage = docker.build("ai-webapp:${IMAGE_TAG}", ".")
+                    runtimeImage = docker.build("ai-webapp:${env.IMAGE_TAG}", ".")
                 }
             }
         }
@@ -65,23 +59,30 @@ pipeline {
                 script {
                     sh """
                       aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO}
-                      docker tag ai-webapp:${IMAGE_TAG} ${ECR_REPO}:${IMAGE_TAG}
-                      docker push ${ECR_REPO}:${IMAGE_TAG}
+                      docker tag ai-webapp:${env.IMAGE_TAG} ${ECR_REPO}:${env.IMAGE_TAG}
+                      docker push ${ECR_REPO}:${env.IMAGE_TAG}
                     """
                 }
             }
         }
 
-        stage('Deploy to EKS') {
+        stage('Deploy Kubernetes Resources') {
             steps {
                 script {
                     sh """
+                      # Update kubeconfig
                       aws eks update-kubeconfig --region ${AWS_REGION} --name ${CLUSTER_NAME}
 
-                      kubectl set image deployment/${K8S_DEPLOYMENT} \
-                        ${K8S_DEPLOYMENT}=${ECR_REPO}:${IMAGE_TAG} \
-                        --namespace=${K8S_NAMESPACE}
+                      # Apply Kubernetes manifests (first-time creation or updates)
+                      kubectl apply -f k8s/deployment.yaml --namespace=${K8S_NAMESPACE}
+                      kubectl apply -f k8s/service.yaml --namespace=${K8S_NAMESPACE}
+                      #kubectl apply -f k8s/configmap.yaml --namespace=${K8S_NAMESPACE}   # optional
+                      #kubectl apply -f k8s/secrets.yaml --namespace=${K8S_NAMESPACE}    # optional
 
+                      # Update only the image for rolling update
+                      kubectl set image deployment/${K8S_DEPLOYMENT} ${K8S_DEPLOYMENT}=${ECR_REPO}:${env.IMAGE_TAG} --namespace=${K8S_NAMESPACE}
+                      
+                      # Wait for rollout to finish
                       kubectl rollout status deployment/${K8S_DEPLOYMENT} --namespace=${K8S_NAMESPACE}
                     """
                 }
