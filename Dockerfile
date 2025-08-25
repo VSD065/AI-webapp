@@ -26,11 +26,12 @@ RUN pip install --no-cache-dir pytest pytest-asyncio
 COPY ./app ./app
 
 # Hugging Face cache env vars
-ENV PYTHONPATH=/app
+# ✅ Add /install site-packages so pytest can import deps like httpx, fastapi, etc.
+ENV PYTHONPATH=/app:/install/lib/python3.11/site-packages
 ENV HF_HOME=/app/.cache/huggingface
 ENV TRANSFORMERS_CACHE=/app/.cache/huggingface
 
-# ✅ Ensure cache dir exists and is writable by any UID (important for Jenkins)
+# Ensure cache dir exists and is writable (important for Jenkins & model downloads)
 RUN mkdir -p /app/.cache/huggingface && chmod -R 777 /app/.cache
 
 
