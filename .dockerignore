@@ -1,8 +1,39 @@
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Unit test / coverage reports
+.pytest_cache/
+.coverage
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Environment files
+.env
+*.env
+.env.*
+
+# IDE/editor specific
+.vscode/
+.idea/
+*.swp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Databases / local storage
 *.db
 *.sqlite3
-.env
 
+# Docker-related
+Dockerfile*
+docker-compose*.yml
+
+# Logs
+*.log
+logs/
